@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Pencil, Plus } from 'lucide-react';
+import MapPicker from '../../components/common/MapPicker';
 import { gymsApi } from '../../api/gyms.api';
 import { useAdminGym } from '../../contexts/AdminGymContext';
 import { useSubmit } from '../../hooks/useSubmit';
@@ -50,12 +51,22 @@ function GymForm({ gym, onClose, onSaved }) {
     const ok = await run(() => (editing ? gymsApi.update(gym.id, body) : gymsApi.create(body)), { success: editing ? 'Gym updated' : 'Gym created' });
     if (ok) { onSaved(); onClose(); }
   };
+  const pick = async (lat, lng) => {
+  setV((x) => ({ ...x, latitude: String(lat), longitude: String(lng) }));
+  if (v.address.trim()) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+    const j = await r.json();
+    if (j.display_name) setV((x) => (x.address.trim() ? x : { ...x, address: j.display_name }));
+  } catch { /* the address can be typed by hand */ }
+};
 
   return (
     <Modal open onClose={onClose} title={editing ? `Edit ${gym.name}` : 'New gym'} size="lg" locked={pending} footer={<><Button variant="secondary" onClick={onClose} disabled={pending}>Cancel</Button><Button onClick={submit} loading={pending}>{editing ? 'Save changes' : 'Create gym'}</Button></>}>
       <form onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
         <TextField className="sm:col-span-2" label="Gym name" value={v.name} onChange={set('name')} error={err('name')} required />
         <TextField className="sm:col-span-2" label="Address" value={v.address} onChange={set('address')} error={err('address')} required />
+        <div className="sm:col-span-2"><MapPicker lat={v.latitude} lng={v.longitude} onPick={pick} /></div>
         <TextField label="Latitude" type="number" step="any" value={v.latitude} onChange={set('latitude')} error={err('latitude')} required />
         <TextField label="Longitude" type="number" step="any" value={v.longitude} onChange={set('longitude')} error={err('longitude')} required />
         <TextField label="Opens" type="time" value={v.openingTime} onChange={set('openingTime')} error={err('openingTime')} required />
