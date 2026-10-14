@@ -48,6 +48,7 @@ import Account from './pages/provider/Account';
 import NutritionDashboard from './pages/nutrition/Dashboard';
 import Plan from './pages/nutrition/Plan';
 import StaffDashboard from './pages/staff/Dashboard';
+import StaffCheckin from './pages/staff/Checkin';
 
 /** Trainer and physiotherapist share the same pages under their own URL prefix and role guard. */
 function coachRoutes(base, role, label) {
@@ -142,6 +143,7 @@ export default function App() {
         <Route element={<ProtectedRoute roles={['GYM_STAFF']} />}>
           <Route path="staff" element={<AppShell nav={STAFF_NAV} portal="Gym staff" />}>
             <Route index element={<StaffDashboard />} />
+            <Route path="checkin" element={<StaffCheckin />} />
             <Route path="account" element={<Account />} />
             <Route path="*" element={<NotFound />} />
           </Route>
