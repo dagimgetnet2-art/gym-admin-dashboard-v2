@@ -5,137 +5,492 @@ import { gymsApi } from '../../api/gyms.api';
 import { useAdminGym } from '../../contexts/AdminGymContext';
 import { useSubmit } from '../../hooks/useSubmit';
 import { PageHeader } from '../../components/common/Layout';
-import { EmptyState, ErrorState, SkeletonGrid } from '../../components/common/states';
+import {
+  EmptyState,
+  ErrorState,
+  SkeletonGrid,
+} from '../../components/common/states';
 import { GymPhoto } from '../../components/common/GymParts';
 import Button from '../../components/common/Button';
 import StatusBadge from '../../components/common/StatusBadge';
-import { TextArea, TextField } from '../../components/common/Field';
+import { TextField } from '../../components/common/Field';
 import { collect, isUrl, numberInRange, required } from '../../utils/validators';
 import { splitCsv } from '../../utils/format';
 import { Pencil, Plus, PowerOff } from 'lucide-react';
 import Modal, { ConfirmDialog } from '../../components/common/Modal';
+import ImageUploader from '../../components/common/ImageUploader';
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function GymForm({ gym, onClose, onSaved }) {
   const editing = Boolean(gym);
+
   const [v, setV] = useState({
-    name: gym?.name || '', address: gym?.address || '', latitude: gym?.latitude ?? '', longitude: gym?.longitude ?? '',
-    openingTime: gym?.openingTime || '06:00', closingTime: gym?.closingTime || '22:00', capacity: gym?.capacity ?? '',
-    photos: (gym?.photos || []).join('\n'), amenities: (gym?.amenities || []).join(', '),
+    name: gym?.name || '',
+    address: gym?.address || '',
+    latitude: gym?.latitude ?? '',
+    longitude: gym?.longitude ?? '',
+    openingTime: gym?.openingTime || '06:00',
+    closingTime: gym?.closingTime || '22:00',
+    capacity: gym?.capacity ?? '',
+    // Support an existing array of photos or a single photo URL.
+    photos: Array.isArray(gym?.photos)
+      ? gym.photos[0] || ''
+      : gym?.photos || '',
+    amenities: (gym?.amenities || []).join(', '),
   });
+
   const [errors, setErrors] = useState({});
+
   const { run, pending, error, fieldErrors } = useSubmit();
-  const set = (k) => (e) => setV((x) => ({ ...x, [k]: e.target.value }));
-  const err = (k) => errors[k] || fieldErrors[k];
+
+  const set = (key) => (e) =>
+    setV((x) => ({
+      ...x,
+      [key]: e.target.value,
+    }));
+
+  const err = (key) => errors[key] || fieldErrors[key];
 
   const submit = async (e) => {
     e.preventDefault();
-    const photos = v.photos.split('\n').map((s) => s.trim()).filter(Boolean);
+
+    const photoUrl = v.photos.trim();
+
     const found = collect({
       name: () => required(v.name, 'Name'),
+
       address: () => required(v.address, 'Address'),
-      latitude: () => numberInRange(v.latitude, { min: -90, max: 90, label: 'Latitude' }),
-      longitude: () => numberInRange(v.longitude, { min: -180, max: 180, label: 'Longitude' }),
-      openingTime: () => (TIME.test(v.openingTime) ? null : 'Use HH:mm.'),
-      closingTime: () => (!TIME.test(v.closingTime) ? 'Use HH:mm.' : v.closingTime <= v.openingTime ? 'Closing must be after opening.' : null),
-      capacity: () => numberInRange(v.capacity, { min: 1, integer: true, label: 'Capacity' }),
-      photos: () => (photos.every(isUrl) ? null : 'Every photo must be a full http(s) link, one per line.'),
+
+      latitude: () =>
+        numberInRange(v.latitude, {
+          min: -90,
+          max: 90,
+          label: 'Latitude',
+        }),
+
+      longitude: () =>
+        numberInRange(v.longitude, {
+          min: -180,
+          max: 180,
+          label: 'Longitude',
+        }),
+
+      openingTime: () =>
+        TIME.test(v.openingTime)
+          ? null
+          : 'Use HH:mm.',
+
+      closingTime: () =>
+        !TIME.test(v.closingTime)
+          ? 'Use HH:mm.'
+          : v.closingTime <= v.openingTime
+            ? 'Closing must be after opening.'
+            : null,
+
+      capacity: () =>
+        numberInRange(v.capacity, {
+          min: 1,
+          integer: true,
+          label: 'Capacity',
+        }),
+
+      photos: () =>
+        !photoUrl || isUrl(photoUrl)
+          ? null
+          : 'Gym photo must be a valid HTTP or HTTPS URL.',
     });
+
     setErrors(found);
+
     if (Object.keys(found).length) return;
+
+    // Keep the backend's existing photos array format.
+    const photos = photoUrl ? [photoUrl] : [];
+
     const body = {
-      name: v.name.trim(), address: v.address.trim(), latitude: Number(v.latitude), longitude: Number(v.longitude),
-      openingTime: v.openingTime, closingTime: v.closingTime, capacity: Number(v.capacity), photos, amenities: splitCsv(v.amenities),
+      name: v.name.trim(),
+      address: v.address.trim(),
+      latitude: Number(v.latitude),
+      longitude: Number(v.longitude),
+      openingTime: v.openingTime,
+      closingTime: v.closingTime,
+      capacity: Number(v.capacity),
+      photos,
+      amenities: splitCsv(v.amenities),
     };
-    const ok = await run(() => (editing ? gymsApi.update(gym.id, body) : gymsApi.create(body)), { success: editing ? 'Gym updated' : 'Gym created' });
-    if (ok) { onSaved(); onClose(); }
-  };
- const pick = async (lat, lng) => {
-  setV((x) => ({ ...x, latitude: String(lat), longitude: String(lng) }));
-  if (v.address.trim()) return;
-  try {
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&zoom=16&lat=${lat}&lon=${lng}`
+
+    const ok = await run(
+      () =>
+        editing
+          ? gymsApi.update(gym.id, body)
+          : gymsApi.create(body),
+      {
+        success: editing ? 'Gym updated' : 'Gym created',
+      }
     );
-    const j = await r.json();
-    const a = j.address || {};
-    const area = a.neighbourhood || a.suburb || a.quarter || a.road || a.city_district;
-    const city = a.city || a.town || a.village || a.state;
-    const short = [...new Set([area, city].filter(Boolean))].join(', ');
-    if (short) setV((x) => (x.address.trim() ? x : { ...x, address: short }));
-  } catch { /* the address can be typed by hand */ }
-};
+
+    if (ok) {
+      onSaved();
+      onClose();
+    }
+  };
+
+  const pick = async (lat, lng) => {
+    setV((x) => ({
+      ...x,
+      latitude: String(lat),
+      longitude: String(lng),
+    }));
+
+    if (v.address.trim()) return;
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&zoom=16&lat=${lat}&lon=${lng}`
+      );
+
+      const data = await response.json();
+      const address = data.address || {};
+
+      const area =
+        address.neighbourhood ||
+        address.suburb ||
+        address.quarter ||
+        address.road ||
+        address.city_district;
+
+      const city =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.state;
+
+      const shortAddress = [...new Set([area, city].filter(Boolean))]
+        .join(', ');
+
+      if (shortAddress) {
+        setV((x) =>
+          x.address.trim()
+            ? x
+            : {
+                ...x,
+                address: shortAddress,
+              }
+        );
+      }
+    } catch {
+      // The address can be entered manually.
+    }
+  };
 
   return (
-    <Modal open onClose={onClose} title={editing ? `Edit ${gym.name}` : 'New gym'} size="lg" locked={pending} footer={<><Button variant="secondary" onClick={onClose} disabled={pending}>Cancel</Button><Button onClick={submit} loading={pending}>{editing ? 'Save changes' : 'Create gym'}</Button></>}>
-      <form onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
-        <TextField className="sm:col-span-2" label="Gym name" value={v.name} onChange={set('name')} error={err('name')} required />
-        <TextField className="sm:col-span-2" label="Address" value={v.address} onChange={set('address')} error={err('address')} required />
-        <div className="sm:col-span-2"><MapPicker lat={v.latitude} lng={v.longitude} onPick={pick} /></div>
-        <TextField label="Latitude" type="number" step="any" value={v.latitude} onChange={set('latitude')} error={err('latitude')} required />
-        <TextField label="Longitude" type="number" step="any" value={v.longitude} onChange={set('longitude')} error={err('longitude')} required />
-        <TextField label="Opens" type="time" value={v.openingTime} onChange={set('openingTime')} error={err('openingTime')} required />
-        <TextField label="Closes" type="time" value={v.closingTime} onChange={set('closingTime')} error={err('closingTime')} required />
-        <TextField label="Capacity" type="number" min="1" value={v.capacity} onChange={set('capacity')} error={err('capacity')} hint="People allowed at the same time." required />
-        <TextField label="Amenities" value={v.amenities} onChange={set('amenities')} hint="Comma separated, e.g. Showers, Parking." />
-        <TextArea className="sm:col-span-2" label="Photo links" rows={3} value={v.photos} onChange={set('photos')} error={err('photos')} hint="One image link per line." />
-        {error && <p role="alert" className="text-sm text-red-600 sm:col-span-2">{error.message}</p>}
+    <Modal
+      open
+      onClose={onClose}
+      title={editing ? `Edit ${gym.name}` : 'New gym'}
+      size="lg"
+      locked={pending}
+      footer={
+        <>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={pending}
+          >
+            Cancel
+          </Button>
+
+          <Button onClick={submit} loading={pending}>
+            {editing ? 'Save changes' : 'Create gym'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        onSubmit={submit}
+        noValidate
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        <TextField
+          className="sm:col-span-2"
+          label="Gym name"
+          value={v.name}
+          onChange={set('name')}
+          error={err('name')}
+          required
+        />
+
+        <TextField
+          className="sm:col-span-2"
+          label="Address"
+          value={v.address}
+          onChange={set('address')}
+          error={err('address')}
+          required
+        />
+
+        <div className="sm:col-span-2">
+          <MapPicker
+            lat={v.latitude}
+            lng={v.longitude}
+            onPick={pick}
+          />
+        </div>
+
+        <TextField
+          label="Latitude"
+          type="number"
+          step="any"
+          value={v.latitude}
+          onChange={set('latitude')}
+          error={err('latitude')}
+          required
+        />
+
+        <TextField
+          label="Longitude"
+          type="number"
+          step="any"
+          value={v.longitude}
+          onChange={set('longitude')}
+          error={err('longitude')}
+          required
+        />
+
+        <TextField
+          label="Opens"
+          type="time"
+          value={v.openingTime}
+          onChange={set('openingTime')}
+          error={err('openingTime')}
+          required
+        />
+
+        <TextField
+          label="Closes"
+          type="time"
+          value={v.closingTime}
+          onChange={set('closingTime')}
+          error={err('closingTime')}
+          required
+        />
+
+        <TextField
+          label="Capacity"
+          type="number"
+          min="1"
+          value={v.capacity}
+          onChange={set('capacity')}
+          error={err('capacity')}
+          hint="People allowed at the same time."
+          required
+        />
+
+        <TextField
+          label="Amenities"
+          value={v.amenities}
+          onChange={set('amenities')}
+          hint="Comma separated, e.g. Showers, Parking."
+        />
+
+        {/* One photo per gym */}
+        <div className="sm:col-span-2">
+          <ImageUploader
+            label="Gym photo"
+            name={v.name}
+            value={v.photos}
+            onChange={(url) =>
+              setV((x) => ({
+                ...x,
+                photos: url,
+              }))
+            }
+          />
+
+          {err('photos') && (
+            <p className="mt-1 text-sm text-red-600" role="alert">
+              {err('photos')}
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="text-sm text-red-600 sm:col-span-2"
+          >
+            {error.message}
+          </p>
+        )}
       </form>
     </Modal>
   );
 }
 
 export default function AdminGyms() {
-  const { gyms, loading, error, reload, gym: active, selectGym } = useAdminGym();
-  const [form, setForm] = useState(null); // null | 'new' | gym
+  const {
+    gyms,
+    loading,
+    error,
+    reload,
+    gym: active,
+    selectGym,
+  } = useAdminGym();
+
+  const [form, setForm] = useState(null);
   const [deactivating, setDeactivating] = useState(null);
-const deactivate = useSubmit();
-const confirmDeactivate = async () => {
-  const ok = await deactivate.run(() => gymsApi.update(deactivating.id, { isActive: false }), { success: 'Gym deactivated' });
-  if (ok) { setDeactivating(null); reload(); }
-};
+
+  const deactivate = useSubmit();
+
+  const confirmDeactivate = async () => {
+    const ok = await deactivate.run(
+      () =>
+        gymsApi.update(deactivating.id, {
+          isActive: false,
+        }),
+      {
+        success: 'Gym deactivated',
+      }
+    );
+
+    if (ok) {
+      setDeactivating(null);
+      reload();
+    }
+  };
 
   return (
     <>
-      <PageHeader title="Gyms" subtitle="Gyms you own. Use the switcher in the top bar to choose which one the other pages show." actions={<Button icon={Plus} onClick={() => setForm('new')}>New gym</Button>} />
-      {loading && !gyms.length ? <SkeletonGrid count={3} /> : error && !gyms.length ? <ErrorState error={error} onRetry={reload} /> : gyms.length === 0 ? (
-        <EmptyState title="No gyms yet" message="Create your first gym to start adding packages and accepting bookings." action={<Button icon={Plus} onClick={() => setForm('new')}>Create a gym</Button>} />
+      <PageHeader
+        title="Gyms"
+        subtitle="Gyms you own. Use the switcher in the top bar to choose which one the other pages show."
+        actions={
+          <Button
+            icon={Plus}
+            onClick={() => setForm('new')}
+          >
+            New gym
+          </Button>
+        }
+      />
+
+      {loading && !gyms.length ? (
+        <SkeletonGrid count={3} />
+      ) : error && !gyms.length ? (
+        <ErrorState error={error} onRetry={reload} />
+      ) : gyms.length === 0 ? (
+        <EmptyState
+          title="No gyms yet"
+          message="Create your first gym to start adding packages and accepting bookings."
+          action={
+            <Button
+              icon={Plus}
+              onClick={() => setForm('new')}
+            >
+              Create a gym
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {gyms.map((g) => (
-            <article key={g.id} className={`card overflow-hidden ${active?.id === g.id ? 'ring-2 ring-brand/30' : ''}`}>
-              <GymPhoto photos={g.photos} name={g.name} />
+            <article
+              key={g.id}
+              className={`card overflow-hidden ${
+                active?.id === g.id
+                  ? 'ring-2 ring-brand/30'
+                  : ''
+              }`}
+            >
+              <GymPhoto
+                photos={g.photos}
+                name={g.name}
+              />
+
               <div className="p-4">
-                <div className="flex items-start justify-between gap-2"><h2 className="text-xl">{g.name}</h2><StatusBadge status={g.isActive ? 'active' : 'inactive'} /></div>
-                <p className="text-sm text-ink-500">{g.address}</p>
-                <p className="mt-1 text-sm text-ink-600">{g.openingTime} - {g.closingTime} · capacity {g.capacity} · {g._count?.bookings ?? 0} bookings</p>
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-xl">{g.name}</h2>
+
+                  <StatusBadge
+                    status={g.isActive ? 'active' : 'inactive'}
+                  />
+                </div>
+
+                <p className="text-sm text-ink-500">
+                  {g.address}
+                </p>
+
+                <p className="mt-1 text-sm text-ink-600">
+                  {g.openingTime} - {g.closingTime} · capacity{' '}
+                  {g.capacity} · {g._count?.bookings ?? 0} bookings
+                </p>
+
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" icon={Pencil} onClick={() => setForm(g)}>Edit</Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={Pencil}
+                    onClick={() => setForm(g)}
+                  >
+                    Edit
+                  </Button>
+
                   {g.isActive && (
-  <Button size="sm" variant="dangerOutline" icon={PowerOff} onClick={() => setDeactivating(g)}>
-    Deactivate
-  </Button>
-)}
-                  {active?.id !== g.id && <Button size="sm" variant="ghost" onClick={() => selectGym(g.id)}>Work on this gym</Button>}
-                  <Button as={Link} to="/admin/packages" size="sm" variant="ghost" onClick={() => selectGym(g.id)}>Packages</Button>
+                    <Button
+                      size="sm"
+                      variant="dangerOutline"
+                      icon={PowerOff}
+                      onClick={() => setDeactivating(g)}
+                    >
+                      Deactivate
+                    </Button>
+                  )}
+
+                  {active?.id !== g.id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => selectGym(g.id)}
+                    >
+                      Work on this gym
+                    </Button>
+                  )}
+
+                  <Button
+                    as={Link}
+                    to="/admin/packages"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => selectGym(g.id)}
+                  >
+                    Packages
+                  </Button>
                 </div>
               </div>
             </article>
           ))}
         </div>
       )}
-      {form && <GymForm gym={form === 'new' ? null : form} onClose={() => setForm(null)} onSaved={reload} />}
-        <ConfirmDialog
-  open={Boolean(deactivating)}
-  title={`Deactivate ${deactivating?.name}?`}
-  message="Members will no longer see or book this gym. Existing bookings and data are kept. You cannot turn it back on from the app."
-  confirmLabel="Deactivate"
-  danger
-  loading={deactivate.pending}
-  onConfirm={confirmDeactivate}
-  onClose={() => setDeactivating(null)}
-/>
+
+      {form && (
+        <GymForm
+          gym={form === 'new' ? null : form}
+          onClose={() => setForm(null)}
+          onSaved={reload}
+        />
+      )}
+
+      <ConfirmDialog
+        open={Boolean(deactivating)}
+        title={`Deactivate ${deactivating?.name}?`}
+        message="Members will no longer see or book this gym. Existing bookings and data are kept. You cannot turn it back on from the app."
+        confirmLabel="Deactivate"
+        danger
+        loading={deactivate.pending}
+        onConfirm={confirmDeactivate}
+        onClose={() => setDeactivating(null)}
+      />
     </>
   );
 }

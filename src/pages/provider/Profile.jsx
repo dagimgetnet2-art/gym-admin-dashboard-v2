@@ -1,3 +1,4 @@
+import ImageUploader from '../../components/common/ImageUploader';
 import { useState } from 'react';
 import { meApi } from '../../api/me.api';
 import { useAsync } from '../../hooks/useAsync';
@@ -46,7 +47,7 @@ function Form({ profile, onSaved }) {
       <TextField label="Specializations" value={v.specializations} onChange={set('specializations')} hint="Comma separated, e.g. Strength, Mobility." />
       <TextField label="Certifications" value={v.certifications} onChange={set('certifications')} hint="Comma separated." />
       <TextField label="Years of experience" type="number" min="0" value={v.experienceYears} onChange={set('experienceYears')} error={err('experienceYears')} />
-      <TextField label="Photo link" type="url" value={v.photoUrl} onChange={set('photoUrl')} error={err('photoUrl')} hint="Paste a link to an image. Uploads are not supported." />
+      <ImageUploader label="Profile photo" name={v.name} value={v.photoUrl} onChange={(url) => setV((x) => ({ ...x, photoUrl: url }))} />
       <Button type="submit" loading={pending}>Save profile</Button>
     </form>
   );

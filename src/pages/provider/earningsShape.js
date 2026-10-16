@@ -1,11 +1,6 @@
 import { asList } from '../../api/client';
 
-/**
- * E-45 is unverified, so the response is read defensively:
- *  - balance: { available, requested, paid }, either nested under `balance` or at the top level
- *  - ledger: array under `ledger` | `entries` | `earnings`
- *  - perGym: optional array of { gymId, gymName, available, requested, paid } (consultants)
- */
+
 export function normalizeEarnings(data) {
   const b = data?.balance || data || {};
   const num = (x) => Number(x ?? 0) || 0;

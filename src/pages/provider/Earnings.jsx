@@ -69,7 +69,7 @@ export default function Earnings() {
 
   return (
     <>
-      <PageHeader title="Earnings and payouts" subtitle="The gym pays you outside the app. Request a payout and the gym admin records it once paid." actions={view && <Button icon={Banknote} onClick={() => setOpen(true)} disabled={view.balance.available <= 0 && !gyms.some((g) => g.available > 0)}>Request payout</Button>} />
+      <PageHeader title="Earnings and payouts" subtitle=" " actions={view && <Button icon={Banknote} onClick={() => setOpen(true)} disabled={view.balance.available <= 0 && !gyms.some((g) => g.available > 0)}>Request payout</Button>} />
       {earnings.loading && !earnings.data ? <SkeletonList rows={2} /> : earnings.error && !earnings.data ? <ErrorState error={earnings.error} onRetry={earnings.reload} /> : (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
