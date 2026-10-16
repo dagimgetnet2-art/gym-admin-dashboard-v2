@@ -30,7 +30,6 @@ export default function NutritionDashboard() {
         <StatCard label="Unread messages" value={unread} icon={MessageSquare} loading={threads.loading && !threads.data} />
         <StatCard label="Available balance" value={bal ? formatMoney(bal.available) : '-'} hint="Across all gyms" icon={Wallet} loading={earnings.loading && !earnings.data} />
       </div>
-      {[clients, threads, earnings].find((s) => s.error && !s.data) && <div className="mt-6"><ErrorState error={[clients, threads, earnings].find((s) => s.error && !s.data).error} onRetry={() => { clients.reload(); threads.reload(); earnings.reload(); }} /></div>}
       <Card title="Your consultation plan" className="mt-6" actions={<Link to="/nutrition/plan" className="text-sm font-medium text-brand hover:underline">Edit</Link>}>
         {plan.loading && !plan.data ? <p className="text-ink-500">Loading...</p> : p && p.price != null ? <p><strong>{formatMoney(p.price)}</strong> for {p.chatDurationDays ?? p.chatDays ?? '-'} days of chat.</p> : (
           <div className="flex items-center justify-between gap-3"><p className="text-ink-500">You have not set a price yet, so members cannot add you at checkout.</p><Button as={Link} to="/nutrition/plan" size="sm" icon={Apple}>Set up plan</Button></div>

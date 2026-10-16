@@ -14,4 +14,6 @@ export const adminApi = {
   payouts: (status) => api.get('/api/admin/payouts', clean({ status })),
   markPaid: (id, body) => api.post(`/api/admin/payouts/${id}/mark-paid`, body),
   reject: (id, body) => api.post(`/api/admin/payouts/${id}/reject`, body),
+
+  
 };

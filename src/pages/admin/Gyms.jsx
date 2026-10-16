@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Plus } from 'lucide-react';
 import MapPicker from '../../components/common/MapPicker';
 import { gymsApi } from '../../api/gyms.api';
 import { useAdminGym } from '../../contexts/AdminGymContext';
@@ -8,12 +7,13 @@ import { useSubmit } from '../../hooks/useSubmit';
 import { PageHeader } from '../../components/common/Layout';
 import { EmptyState, ErrorState, SkeletonGrid } from '../../components/common/states';
 import { GymPhoto } from '../../components/common/GymParts';
-import Modal from '../../components/common/Modal';
 import Button from '../../components/common/Button';
 import StatusBadge from '../../components/common/StatusBadge';
 import { TextArea, TextField } from '../../components/common/Field';
 import { collect, isUrl, numberInRange, required } from '../../utils/validators';
 import { splitCsv } from '../../utils/format';
+import { Pencil, Plus, PowerOff } from 'lucide-react';
+import Modal, { ConfirmDialog } from '../../components/common/Modal';
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -51,13 +51,19 @@ function GymForm({ gym, onClose, onSaved }) {
     const ok = await run(() => (editing ? gymsApi.update(gym.id, body) : gymsApi.create(body)), { success: editing ? 'Gym updated' : 'Gym created' });
     if (ok) { onSaved(); onClose(); }
   };
-  const pick = async (lat, lng) => {
+ const pick = async (lat, lng) => {
   setV((x) => ({ ...x, latitude: String(lat), longitude: String(lng) }));
   if (v.address.trim()) return;
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&zoom=16&lat=${lat}&lon=${lng}`
+    );
     const j = await r.json();
-    if (j.display_name) setV((x) => (x.address.trim() ? x : { ...x, address: j.display_name }));
+    const a = j.address || {};
+    const area = a.neighbourhood || a.suburb || a.quarter || a.road || a.city_district;
+    const city = a.city || a.town || a.village || a.state;
+    const short = [...new Set([area, city].filter(Boolean))].join(', ');
+    if (short) setV((x) => (x.address.trim() ? x : { ...x, address: short }));
   } catch { /* the address can be typed by hand */ }
 };
 
@@ -73,7 +79,7 @@ function GymForm({ gym, onClose, onSaved }) {
         <TextField label="Closes" type="time" value={v.closingTime} onChange={set('closingTime')} error={err('closingTime')} required />
         <TextField label="Capacity" type="number" min="1" value={v.capacity} onChange={set('capacity')} error={err('capacity')} hint="People allowed at the same time." required />
         <TextField label="Amenities" value={v.amenities} onChange={set('amenities')} hint="Comma separated, e.g. Showers, Parking." />
-        <TextArea className="sm:col-span-2" label="Photo links" rows={3} value={v.photos} onChange={set('photos')} error={err('photos')} hint="One image link per line. Uploads are not supported." />
+        <TextArea className="sm:col-span-2" label="Photo links" rows={3} value={v.photos} onChange={set('photos')} error={err('photos')} hint="One image link per line." />
         {error && <p role="alert" className="text-sm text-red-600 sm:col-span-2">{error.message}</p>}
       </form>
     </Modal>
@@ -83,6 +89,12 @@ function GymForm({ gym, onClose, onSaved }) {
 export default function AdminGyms() {
   const { gyms, loading, error, reload, gym: active, selectGym } = useAdminGym();
   const [form, setForm] = useState(null); // null | 'new' | gym
+  const [deactivating, setDeactivating] = useState(null);
+const deactivate = useSubmit();
+const confirmDeactivate = async () => {
+  const ok = await deactivate.run(() => gymsApi.update(deactivating.id, { isActive: false }), { success: 'Gym deactivated' });
+  if (ok) { setDeactivating(null); reload(); }
+};
 
   return (
     <>
@@ -100,6 +112,11 @@ export default function AdminGyms() {
                 <p className="mt-1 text-sm text-ink-600">{g.openingTime} - {g.closingTime} · capacity {g.capacity} · {g._count?.bookings ?? 0} bookings</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" icon={Pencil} onClick={() => setForm(g)}>Edit</Button>
+                  {g.isActive && (
+  <Button size="sm" variant="dangerOutline" icon={PowerOff} onClick={() => setDeactivating(g)}>
+    Deactivate
+  </Button>
+)}
                   {active?.id !== g.id && <Button size="sm" variant="ghost" onClick={() => selectGym(g.id)}>Work on this gym</Button>}
                   <Button as={Link} to="/admin/packages" size="sm" variant="ghost" onClick={() => selectGym(g.id)}>Packages</Button>
                 </div>
@@ -109,6 +126,16 @@ export default function AdminGyms() {
         </div>
       )}
       {form && <GymForm gym={form === 'new' ? null : form} onClose={() => setForm(null)} onSaved={reload} />}
+        <ConfirmDialog
+  open={Boolean(deactivating)}
+  title={`Deactivate ${deactivating?.name}?`}
+  message="Members will no longer see or book this gym. Existing bookings and data are kept. You cannot turn it back on from the app."
+  confirmLabel="Deactivate"
+  danger
+  loading={deactivate.pending}
+  onConfirm={confirmDeactivate}
+  onClose={() => setDeactivating(null)}
+/>
     </>
   );
 }
