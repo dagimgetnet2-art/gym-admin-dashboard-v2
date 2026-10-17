@@ -24,7 +24,7 @@ export default function NutritionDashboard() {
 
   return (
     <>
-      <PageHeader title={`Welcome, ${user.name?.split(' ')[0]}`} subtitle="Clients, messages and balances across every gym. Consultants are not rated in this version." />
+      <PageHeader title={`Welcome, ${user.name?.split(' ')[0]}`} subtitle="Clients, messages and balances across every gym." />
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Active clients" value={asList(clients.data, 'clients').length} icon={HeartPulse} loading={clients.loading && !clients.data} />
         <StatCard label="Unread messages" value={unread} icon={MessageSquare} loading={threads.loading && !threads.data} />

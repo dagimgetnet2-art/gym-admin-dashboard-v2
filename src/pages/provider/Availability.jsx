@@ -16,7 +16,7 @@ export default function Availability() {
 
   useEffect(() => {
     if (!state.data) return;
-    const list = asList(state.data, 'availability').map(({ dayOfWeek, period }) => ({ dayOfWeek, period }));
+    const list = asList(state.data, 'slots').map(({ dayOfWeek, period }) => ({ dayOfWeek, period }));
     setValue(list);
     setSaved(list);
   }, [state.data]);

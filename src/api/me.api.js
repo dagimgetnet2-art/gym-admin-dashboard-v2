@@ -6,7 +6,7 @@ export const meApi = {
   profile: () => api.get('/api/me/provider'),
   updateProfile: (body) => api.put('/api/me/provider', body),
   availability: () => api.get('/api/me/availability'),
-  replaceAvailability: (availability) => api.put('/api/me/availability', { availability }),
+  replaceAvailability: (slots) => api.put('/api/me/availability', { slots }),
   packages: () => api.get('/api/me/packages'),
   createPackage: (body) => api.post('/api/me/packages', body),
   // Update/delete paths follow the "CRUD /me/packages" wording of the spec (assumed REST shape).
