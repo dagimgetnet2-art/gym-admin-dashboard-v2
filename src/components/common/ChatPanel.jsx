@@ -28,10 +28,10 @@ function MessageList({ threadId, role, userId, writable, onSent }) {
   const bottomRef = useRef(null);
   const stickToBottom = useRef(true);
 
-  const isMine = useCallback(
-    (m) => m.isMine ?? m.mine ?? (m.senderRole ? m.senderRole === role : String(m.senderId) === String(userId)),
-    [role, userId],
-  );
+    const isMine = useCallback(
+     (m) => (role === 'MEMBER' ? m.senderUserId != null : m.senderProviderId != null),
+     [role],
+   );  
 
   const merge = (list, incoming) => {
     const map = new Map(list.filter((m) => !String(m.id).startsWith('tmp-')).map((m) => [String(m.id), m]));
@@ -127,17 +127,18 @@ function MessageList({ threadId, role, userId, writable, onSent }) {
           lastDay = day;
           return (
             <div key={m.id}>
-              {showDay && <p className="my-3 text-center text-xs text-ink-400">{day}</p>}
-              <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${mine ? 'rounded-br-sm bg-brand text-white' : 'rounded-bl-sm bg-ink-100 text-ink'} ${m.pending ? 'opacity-60' : ''}`}>
-                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                  <p className={`mt-0.5 text-right text-[11px] ${mine ? 'text-white/70' : 'text-ink-400'}`}>
-                    {formatTime(m.createdAt)}
-                    {mine && !m.pending && (m.readAt ? ' · read' : ' · sent')}
-                  </p>
-                </div>
-              </div>
-            </div>
+  {showDay && <p className="my-3 text-center text-xs text-ink-400">{day}</p>}
+  <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+    <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${mine ? 'rounded-br-sm bg-[#2E68F4] text-white' : 'rounded-bl-sm bg-ink-100 text-ink'} ${m.pending ? 'opacity-60' : ''}`}>
+      <p className="whitespace-pre-wrap break-words">{m.body}</p>
+      <p className={`mt-0.5 text-right text-[11px] ${mine ? 'text-white/70' : 'text-ink-400'}`}>
+        {formatTime(m.createdAt)}
+        {mine && !m.pending && (m.readAt ? ' · read' : ' · sent')}
+      </p>
+    </div>
+  </div>
+</div>
+             
           );
         })}
         <div ref={bottomRef} />
