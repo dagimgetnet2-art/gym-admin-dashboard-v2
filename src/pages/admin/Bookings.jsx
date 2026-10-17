@@ -59,8 +59,6 @@ function Content({ gym }) {
     { key: 'actions', header: '', className: 'text-right', render: (b) => (
       <span className="inline-flex flex-wrap justify-end gap-1">
         {b.status === 'pending' && <Button size="sm" variant="ghost" icon={Check} loading={busy === b.id} onClick={() => act(b, () => bookingsApi.confirm(b.id), 'Booking confirmed')}>Confirm</Button>}
-        {b.status === 'confirmed' && <Button size="sm" variant="brand" icon={UserCheck} loading={busy === b.id} onClick={() => attend(b)}>Mark attended</Button>}
-        {['pending', 'confirmed'].includes(b.status) && <Button size="sm" variant="ghost" icon={XCircle} disabled={busy === b.id} onClick={() => setCancelling(b)}>Cancel</Button>}
       </span>
     ) },
   ];

@@ -12,5 +12,5 @@ export const bookingsApi = {
   confirm: (id) => api.put(`/api/bookings/${id}/confirm`),
   checkIn: (id) => api.put(`/api/bookings/${id}/check-in`),
   // V2 spec (E-65): marks ATTENDED and feeds streaks/badges. Not in Endpoints_Full.md -> unverified.
-  attend: (id) => api.post(`/api/v1/admin/bookings/${id}/attend`),
+  attend: (id) => api.post(`/api/admin/bookings/${id}/attend`),
 };
