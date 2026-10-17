@@ -13,10 +13,16 @@ export default function Clients({ base, groupByGym = false }) {
   const state = useAsync(() => meApi.clients(), []);
   const rows = asList(state.data, 'clients');
 
+console.log('Total client records:', rows.length);
+console.table(rows);
+
   const row = (c) => {
     const name = c.member?.name || c.name || 'Member';
     return (
-      <li key={c.id ?? c.memberId ?? name} className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <li
+  key={c.id ?? c.memberId ?? c.member?._id ?? c._id}
+  className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+   
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={name} src={c.member?.photoUrl} />
           <div className="min-w-0">
