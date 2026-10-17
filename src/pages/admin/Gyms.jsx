@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Clock, Dumbbell, MapPin, Pencil, Plus, PowerOff, Search, Users } from 'lucide-react';
 
 import { gymsApi } from '../../api/gyms.api';
@@ -9,6 +9,7 @@ import Modal, { ConfirmDialog } from '../../components/common/Modal';
 import Button from '../../components/common/Button';
 import { TextField } from '../../components/common/Field';
 import ImageUploader from '../../components/common/ImageUploader';
+import MapPicker from '../../components/common/MapPicker';
 import { ErrorState, SkeletonGrid } from '../../components/common/states';
 
 import { collect, isUrl, numberInRange, required } from '../../utils/validators';
@@ -181,6 +182,24 @@ function GymForm({ gym, onClose, onSaved }) {
   const set = (key) => (e) => setV((cur) => ({ ...cur, [key]: e.target.value }));
   const err = (key) => errors[key] || fieldErrors[key];
 
+  // Map click: fill latitude/longitude and a short address ("Piassa, Addis Ababa").
+  // The address follows the pin until you type in the Address box yourself.
+  const addressTyped = useRef(false);
+  const pick = async (lat, lng) => {
+    setV((cur) => ({ ...cur, latitude: String(lat), longitude: String(lng) }));
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&zoom=18&lat=${lat}&lon=${lng}`);
+      const j = await r.json();
+      const a = j.address || {};
+      const area = a.neighbourhood || a.suburb || a.quarter || a.city_district || a.residential || a.road || j.name;
+      const city = a.city || a.town || a.village || a.state;
+      const short = [...new Set([area, city].filter(Boolean))].join(', ');
+      if (short && !addressTyped.current) setV((cur) => ({ ...cur, address: short }));
+    } catch {
+      /* the address can be typed by hand */
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
 
@@ -234,33 +253,20 @@ function GymForm({ gym, onClose, onSaved }) {
     >
       <form id="gym-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
         <TextField className="sm:col-span-2" label="Gym name" value={v.name} onChange={set('name')} error={err('name')} required />
-        <TextField className="sm:col-span-2" label="Address" value={v.address} onChange={set('address')} error={err('address')} required />
+        <TextField className="sm:col-span-2" label="Address" value={v.address} onChange={(e) => { addressTyped.current = true; set('address')(e); }} error={err('address')} required />
+        <div className="sm:col-span-2">
+          <MapPicker lat={v.latitude} lng={v.longitude} onPick={pick} />
+        </div>
         <TextField label="Latitude" type="number" step="any" value={v.latitude} onChange={set('latitude')} error={err('latitude')} required />
         <TextField label="Longitude" type="number" step="any" value={v.longitude} onChange={set('longitude')} error={err('longitude')} required />
         <TextField label="Opens" type="time" value={v.openingTime} onChange={set('openingTime')} error={err('openingTime')} required />
         <TextField label="Closes" type="time" value={v.closingTime} onChange={set('closingTime')} error={err('closingTime')} required />
         <TextField className="sm:col-span-2" label="Capacity" type="number" min="1" value={v.capacity} onChange={set('capacity')} error={err('capacity')} hint="People allowed at the same time." required />
 
-
-<div className="sm:col-span-2">
-  <ImageUploader
-    label="Gym Photos"
-    name={v.name || 'Gym'}
-    photos={v.photos}
-    onChange={(photos) =>
-      setV((current) => ({
-        ...current,
-        photos,
-      }))
-    }
-  />
-
-  {err('photos') && (
-    <p className="mt-1 text-sm text-red-600" role="alert">
-      {err('photos')}
-    </p>
-  )}
-</div>
+        <div className="sm:col-span-2">
+          <ImageUploader photos={v.photos} onChange={(photos) => setV((cur) => ({ ...cur, photos }))} />
+          {err('photos') && <p role="alert" className="mt-1 text-sm text-red-600">{err('photos')}</p>}
+        </div>
 
         <TextField className="sm:col-span-2" label="Amenities" value={v.amenities} onChange={set('amenities')} hint="Comma separated, e.g. Wi-Fi, Parking, Shower." />
 
