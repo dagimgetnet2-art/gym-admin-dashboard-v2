@@ -57,7 +57,6 @@ function PackageForm({ gym, pkg, onClose, onSaved }) {
         <SelectField label="Type" value={v.type} onChange={set('type')} options={TYPES} />
         <TextField label="Price per person (ETB)" type="number" min="0" step="any" value={v.price} onChange={set('price')} error={err('price')} required />
         <TextField label="Valid for (days)" type="number" min="1" value={v.durationDays} onChange={set('durationDays')} error={err('durationDays')} hint="1 daily, 7 weekly, 30 monthly." required />
-        <TextField label="Visit limit" type="number" min="1" value={v.maxVisits} onChange={set('maxVisits')} error={err('maxVisits')} hint="Leave empty for unlimited." />
         <TextField label="Largest group" type="number" min="1" value={v.maxGroupSize} onChange={set('maxGroupSize')} error={err('maxGroupSize')} hint="1 means no group bookings." />
         <TextArea className="sm:col-span-2" label="Benefits" value={v.benefits} onChange={set('benefits')} rows={2} />
         <div className="sm:col-span-2"><ChipGroup label="Allowed days" options={DAY_OPTIONS} value={v.allowedDays} onChange={(x) => setV((s) => ({ ...s, allowedDays: x }))} hint="None selected means every day." /></div>

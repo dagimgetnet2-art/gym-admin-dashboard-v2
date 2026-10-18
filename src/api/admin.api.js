@@ -18,7 +18,8 @@ if (Array.isArray(result)) {
 return result?.gyms || [];
 
 },
-
+confirmRefund: (orderId, refundReference) =>
+  api.post(`/api/admin/orders/${orderId}/refund-confirmed`, refundReference ? { refundReference } : {}),
 // Load members, optionally filtered by the selected gym ID.
 users: async (gymId) => {
 const params = gymId ? { gymId } : undefined;
