@@ -32,7 +32,7 @@ export default function NutritionDashboard() {
       </div>
       <Card title="Your consultation plan" className="mt-6" actions={<Link to="/nutrition/plan" className="text-sm font-medium text-brand hover:underline">Edit</Link>}>
         {plan.loading && !plan.data ? <p className="text-ink-500">Loading...</p> : p && p.price != null ? <p><strong>{formatMoney(p.price)}</strong> for {p.chatDurationDays ?? p.chatDays ?? '-'} days of chat.</p> : (
-          <div className="flex items-center justify-between gap-3"><p className="text-ink-500">You have not set a price yet, so members cannot add you at checkout.</p><Button as={Link} to="/nutrition/plan" size="sm" icon={Apple}>Set up plan</Button></div>
+          <div className="flex items-center justify-between gap-3">Plan<p className="text-ink-500"></p><Button as={Link} to="/nutrition/plan" size="sm" icon={Apple}>Set up plan</Button></div>
         )}
       </Card>
     </>

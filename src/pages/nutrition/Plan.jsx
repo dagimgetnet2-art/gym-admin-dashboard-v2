@@ -39,7 +39,7 @@ export default function Plan() {
   const state = useAsync(() => meApi.consultationPlan(), []);
   return (
     <>
-      <PageHeader title="Consultation plan" subtitle="There are no scheduled sessions: a paid consultation unlocks in-app chat for a fixed number of days." />
+      <PageHeader title="Consultation plan" subtitle=" " />
       <Card><AsyncView state={state} skeleton={<SkeletonList rows={2} />}>{(d) => <PlanForm plan={d?.plan || d} onSaved={state.reload} />}</AsyncView></Card>
     </>
   );
