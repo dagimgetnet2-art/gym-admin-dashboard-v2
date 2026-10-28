@@ -38,6 +38,8 @@ const STEPS = [
   ['Pay with Chapa', 'One order, one payment. Unpaid orders are released after 30 minutes.'],
 ];
 
+
+
 export default function Landing() {
   return (
     <div className="bg-[#1E3A8A]">
