@@ -54,7 +54,7 @@ export default function Landing() {
           <TimetablePlate />
         </div>
       </section>
-      
+
 <div className="bg-[#1E3A8A]">
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 ">
         <h2 className="text-3xl sm:text-4xl">One platform, three ways in</h2>
@@ -69,6 +69,7 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
 
       </div>
     </div>
