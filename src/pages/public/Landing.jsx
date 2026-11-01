@@ -60,12 +60,14 @@ export default function Landing() {
         <h2 className="text-3xl sm:text-4xl">One platform, three ways in</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {AUDIENCES.map(({ icon: Icon, title, text, to, cta }) => (
+            
             <article key={title} className="card flex flex-col p-5">
               <Icon className="h-6 w-6 text-brand" aria-hidden="true" />
               <h3 className="mt-3 text-xl">{title}</h3>
               <p className="mt-1 flex-1 text-ink-600">{text}</p>
               <Link to={to} className="mt-4 text-sm font-medium text-brand hover:underline">{cta}</Link>
             </article>
+
           ))}
         </div>
       </section>
