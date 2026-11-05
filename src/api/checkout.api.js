@@ -7,9 +7,8 @@ export const checkoutApi = {
 
   create: async (body) => (await api.post('/api/checkout', body)).data,
   // checkoutUrl from /checkout is always null; this returns the Chapa URL.
-
+  
   initPayment: (bookingId) => api.post('/api/payments/initialize', { [PAYMENT_INIT_KEY]: bookingId }),
   verify: async (txRef) => (await api.get(`/api/payments/verify/${encodeURIComponent(txRef)}`)).result,
   order: async (id) => (await api.get(`/api/orders/${id}`)).order,
-  
 };
