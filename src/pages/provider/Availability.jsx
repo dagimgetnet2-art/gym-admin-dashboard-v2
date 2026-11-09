@@ -8,13 +8,14 @@ import { Card, PageHeader } from '../../components/common/Layout';
 import AvailabilityGrid from '../../components/common/AvailabilityGrid';
 import Button from '../../components/common/Button';
 
+
 export default function Availability() {
   const state = useAsync(() => meApi.availability(), []);
   const [value, setValue] = useState([]);
   const [saved, setSaved] = useState([]);
   const { run, pending } = useSubmit();
 
-  
+
   useEffect(() => {
     if (!state.data) return;
     const list = asList(state.data, 'slots').map(({ dayOfWeek, period }) => ({ dayOfWeek, period }));
