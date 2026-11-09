@@ -14,6 +14,7 @@ export default function Availability() {
   const [saved, setSaved] = useState([]);
   const { run, pending } = useSubmit();
 
+  
   useEffect(() => {
     if (!state.data) return;
     const list = asList(state.data, 'slots').map(({ dayOfWeek, period }) => ({ dayOfWeek, period }));
