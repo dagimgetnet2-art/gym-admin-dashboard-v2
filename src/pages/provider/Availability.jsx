@@ -33,7 +33,6 @@ export default function Availability() {
 
   return (
     <>
-    
       <PageHeader title="Availability" subtitle="Tap the periods you can work each week. Members only see you for bookings that fit. Saving replaces your whole schedule." actions={<Button onClick={save} loading={pending} disabled={!dirty}>Save availability</Button>} />
       <Card>
         <AsyncView state={state} skeleton={<SkeletonList rows={3} />}>
