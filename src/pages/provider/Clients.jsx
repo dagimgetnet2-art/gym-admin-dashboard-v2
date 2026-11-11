@@ -8,7 +8,6 @@ import { Avatar, PageHeader } from '../../components/common/Layout';
 import Button from '../../components/common/Button';
 import { formatDate } from '../../utils/format';
 
-/** Members with active access (E-44). Nutrition consultants see them grouped by gym. */
 export default function Clients({ base, groupByGym = false }) {
   const state = useAsync(() => meApi.clients(), []);
   const rows = asList(state.data, 'clients');
