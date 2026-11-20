@@ -18,7 +18,6 @@ export default function ProviderDashboard({ base }) {
   const earnings = useAsync(() => meApi.earnings(), []);
   const badges = useAsync(() => meApi.badges(), []);
 
-  
   const all = sessions.data || [];
   const upcoming = all.filter((s) => ['SCHEDULED', 'HELD'].includes(s.status) && isFuture(s.startsAt)).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
   const completed = all.filter((s) => s.status === 'COMPLETED').length;
