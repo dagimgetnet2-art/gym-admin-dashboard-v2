@@ -26,6 +26,7 @@ export default function ProviderDashboard({ base }) {
   const bal = earnings.data ? normalizeEarnings(earnings.data).balance : null;
   const earned = badges.data?.earned || (Array.isArray(badges.data) ? badges.data : badges.data?.badges) || [];
 
+  
   return (
     <>
       <PageHeader title={`Welcome, ${user.name?.split(' ')[0]}`} subtitle="Sessions, ratings and earnings from the live API." />
