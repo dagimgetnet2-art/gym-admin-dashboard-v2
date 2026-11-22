@@ -13,6 +13,7 @@ import { normalizeEarnings } from './earningsShape';
 
 export default function ProviderDashboard({ base }) {
   const { user } = useAuth();
+  
   const sessions = useAsync(() => sessionsApi.list(), []);
   const reviews = useAsync(() => providersApi.reviews(user.id, { limit: 50 }), [user.id]);
   const earnings = useAsync(() => meApi.earnings(), []);
