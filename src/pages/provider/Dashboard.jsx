@@ -27,6 +27,7 @@ export default function ProviderDashboard({ base }) {
   const earned = badges.data?.earned || (Array.isArray(badges.data) ? badges.data : badges.data?.badges) || [];
 
   return (
+    
     <>
       <PageHeader title={`Welcome, ${user.name?.split(' ')[0]}`} subtitle="Sessions, ratings and earnings from the live API." />
       {sessions.error && !sessions.data && <div className="mb-6"><ErrorState error={sessions.error} onRetry={sessions.reload} /></div>}
