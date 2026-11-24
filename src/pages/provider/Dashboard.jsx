@@ -11,7 +11,6 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { formatMoney, formatRange, isFuture } from '../../utils/format';
 import { normalizeEarnings } from './earningsShape';
 
-
 export default function ProviderDashboard({ base }) {
   const { user } = useAuth();
   const sessions = useAsync(() => sessionsApi.list(), []);
